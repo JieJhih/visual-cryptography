@@ -1,9 +1,12 @@
 from PIL import Image, ImageDraw
 import os, sys
 import numpy
+import _matrix
 from matplotlib import cm
 import argparse
-
+import logging
+import uuid
+from random import SystemRandom
 
 def get_options():
     parser = argparse.ArgumentParser(description='Visual cryptography.')
@@ -27,4 +30,41 @@ def get_options():
             if height <= 0:
                 parser.error("Resize height should be > 0.")
     return args
+
+
+
+logging.basicConfig(level=logging.INFO)
+args = get_options()
+
+infile = args.message
+if not os.path.isfile(infile):
+	print("That file does not exist.")
+	exit()
+
+# try to open image file
+try:
+    img = Image.open(infile)
+except IOError as e:
+    logging.fatal("Fatal error: I/O error while loading message image '%s' (%s)" % (args.message, str(e)))
+    sys.exit(1)
+
+#f, e = os.path.splitext(infile)
+uuid = uuid.uuid1()
+logging.info('UUID: %s' % (uuid))
+if args.resize:
+    img = img.resize(args.resize, Image.ANTIALIAS)
+img=img.convert('1')#convert image to 1 bit
+pix = numpy.array(img)
+_m1 = _matrix.Matrix(pix)
+
+# prepare two empty matrix
+width=img.size[0]*2
+height=img.size[1]*2
+out_image_A = Image.new('1', (width, height))
+out_image_B = Image.new('1', (width, height))
+a = numpy.array(out_image_A)
+b = numpy.array(out_image_B)
+_m2 = _matrix.Matrix(a)
+_m3 = _matrix.Matrix(b)
+
 
