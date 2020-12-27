@@ -31,7 +31,11 @@ def get_options():
                 parser.error("Resize height should be > 0.")
     return args
 
-
+def save_display(s,c,m,f):
+    img = Image.open(s)
+    background = Image.open(c)
+    background.paste(img, (0, 0), img)
+    background.save(m,f)
 
 logging.basicConfig(level=logging.INFO)
 args = get_options()
@@ -67,4 +71,28 @@ b = numpy.array(out_image_B)
 _m2 = _matrix.Matrix(a)
 _m3 = _matrix.Matrix(b)
 
+f = args.format.lower()
+if not f == 'jpeg' and not f == 'png':
+    logging.fatal("Not support format type: '%s' , only supprt jpeg or png" % (f))
+    sys.exit(1)
+s = args.secret+'.'+f
+c = args.ciphered+'.'+f
 
+if args.prepared_message:
+    _m2 = _matrix.Matrix(numpy.array(Image.open(args.prepared_message).convert('1')))
+    res = _matrix.generate_cipher(_m1,_m2,_m3,int(width/2),int(height/2))
+    d = numpy.asarray(_matrix.to_matrix(res))
+    ttt = Image.fromarray(d)
+    ttt.save(c, f.upper())
+else:
+    res = _matrix.generate(_m1,_m2,_m3,int(width/2),int(height/2))
+    d = numpy.asarray(_matrix.to_matrix(res[0]))
+    ttt = Image.fromarray(d)
+    ttt.save(s, f.upper())
+    d = numpy.asarray(_matrix.to_matrix(res[1]))
+    ttt = Image.fromarray(d)
+    ttt.save(c, f.upper())
+
+if args.display:
+    save_display(s, c, str(uuid)+"_vlidation."+f, f.upper())
+print("Done.")
